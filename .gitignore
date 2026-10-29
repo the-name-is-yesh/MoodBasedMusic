@@ -1,0 +1,36 @@
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE and OS files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Datasets and downloaded archives
+dataset/
+data/
+*.csv
+*.zip
+*.7z
+*.7z.*
+
+# Model files: exclude all by default
+model/*.keras
+model/*.h5
+
+# Keep only the final V3 model
+!model/best_emotion_model_v3.keras
+
+# Generated files and test images
+*.png
+test_image*.jpg
+test_image*.jpeg
+
+# Secrets
+.env
