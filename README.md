@@ -6,7 +6,7 @@ A machine learning-based application that detects facial emotions using a webcam
 
 The **Mood-Based Music Recommendation System** combines computer vision, deep learning, and personalized music recommendations to create an interactive experience.
 
-The application captures facial expressions through a webcam, detects the user's face, and uses a Convolutional Neural Network (CNN) to classify the facial expression into an emotion category. Based on the predicted emotion, the system recommends music intended to match the user's mood.
+The application captures facial expressions through a webcam, detects the user's face, and uses a Convolutional Neural Network (CNN) to classify the facial expression into an emotion category. Based on the predicted emotion, and  the system recommends music intended to match the user's mood.
 
 The project is developed using Python, TensorFlow/Keras, OpenCV, and Streamlit.
 
