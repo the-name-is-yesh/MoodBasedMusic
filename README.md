@@ -24,7 +24,6 @@ The project is developed using Python, TensorFlow/Keras, OpenCV, and Streamlit.
 The application is designed to recognize the following emotion categories, depending on the model configuration:
 
 - Angry
-- Disgust
 - Fear
 - Happy
 - Sad
