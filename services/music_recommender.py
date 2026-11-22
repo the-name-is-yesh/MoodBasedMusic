@@ -1,21 +1,20 @@
-import os
+
+import json
+import urllib.parse
+import urllib.request
 
 import pandas as pd
 
 
-SONG_DATASET_PATH = "data/songs.csv"
-
-
-EMOTIONS = [
-    "angry",
-    "disgust",
-    "fear",
-    "happy",
-    "neutral",
-    "sad",
-    "surprise"
-]
-
+EMOTION_SEARCH_TERMS = {
+    "happy": "feel good upbeat pop",
+    "sad": "sad emotional mellow songs",
+    "angry": "calm relaxing music",
+    "fear": "peaceful soothing music",
+    "neutral": "chill soft pop music",
+    "surprise": "energetic popular music",
+    "disgust": "calm uplifting music",
+}
 
 FALLBACK_EMOTIONS = {
     "disgust": "angry"
@@ -24,140 +23,60 @@ FALLBACK_EMOTIONS = {
 
 def load_songs():
     """
-    Load the song dataset from CSV.
+    Return an empty DataFrame.
+    Song data will be fetched online instead of loaded from CSV.
+    """
+    return pd.DataFrame()
+
+
+def recommend_songs(songs, emotion, number_of_songs=3):
+    """
+    Fetch songs dynamically from the iTunes Search API
+    based on the detected emotion.
     """
 
-    if not os.path.exists(SONG_DATASET_PATH):
+    emotion = emotion.lower()
 
-        raise FileNotFoundError(
-            f"Song dataset not found: {SONG_DATASET_PATH}"
+    search_term = EMOTION_SEARCH_TERMS.get(
+        emotion,
+        "popular music"
+    )
+
+    url = "https://itunes.apple.com/search?" + urllib.parse.urlencode({
+        "term": search_term,
+        "media": "music",
+        "entity": "song",
+        "limit": number_of_songs
+    })
+
+    try:
+        request = urllib.request.Request(
+            url,
+            headers={"User-Agent": "MBMS-Music-App"}
         )
 
-    songs = pd.read_csv(
-        SONG_DATASET_PATH
-    )
+        with urllib.request.urlopen(
+            request,
+            timeout=10
+        ) as response:
+            data = json.loads(response.read().decode("utf-8"))
 
-    return songs
+        results = data.get("results", [])
 
+        songs_list = []
 
-def get_songs_by_emotion(
-    songs,
-    emotion
-):
-    """
-    Return songs that match the detected emotion.
-    """
+        for track in results:
+            songs_list.append({
+                "title": track.get("trackName", "Unknown"),
+                "artist": track.get("artistName", "Unknown"),
+                "genre": track.get("primaryGenreName", "Unknown"),
+                "album_art": track.get("artworkUrl100", ""),
+                "preview_url": track.get("previewUrl", ""),
+                "track_url": track.get("trackViewUrl", "")
+            })
 
-    filtered_songs = songs[
-        songs["emotion"].str.lower()
-        == emotion.lower()
-    ]
+        return pd.DataFrame(songs_list)
 
-    return filtered_songs
-
-
-def recommend_songs(
-    songs,
-    emotion,
-    number_of_songs=3
-):
-    """
-    Recommend random songs based on emotion.
-
-    If no songs exist for an emotion,
-    a fallback emotion is used.
-    """
-
-    matching_songs = get_songs_by_emotion(
-        songs,
-        emotion
-    )
-
-    # Check whether a fallback emotion is needed.
-    if matching_songs.empty:
-
-        fallback_emotion = FALLBACK_EMOTIONS.get(
-            emotion.lower()
-        )
-
-        if fallback_emotion is not None:
-
-            matching_songs = get_songs_by_emotion(
-                songs,
-                fallback_emotion
-            )
-
-    # If there are still no songs,
-    # return an empty DataFrame.
-    if matching_songs.empty:
-
-        return matching_songs
-
-    # Randomly select songs.
-    number_to_select = min(
-        number_of_songs,
-        len(matching_songs)
-    )
-
-    recommended_songs = matching_songs.sample(
-        n=number_to_select
-    )
-
-    return recommended_songs.reset_index(
-        drop=True
-    )
-
-
-if __name__ == "__main__":
-
-    print("Loading song dataset...")
-
-    songs = load_songs()
-
-    print(
-        "\nSong dataset loaded successfully!"
-    )
-
-    print(
-        "\nTotal songs:",
-        len(songs)
-    )
-
-    print(
-        "\n========================================"
-    )
-
-    print(
-        "TESTING RANDOM RECOMMENDATIONS"
-    )
-
-    print(
-        "========================================"
-    )
-
-    for emotion in EMOTIONS:
-
-        print(
-            f"\nEmotion: {emotion.upper()}"
-        )
-
-        recommendations = recommend_songs(
-            songs,
-            emotion,
-            3
-        )
-
-        if recommendations.empty:
-
-            print(
-                "No songs found."
-            )
-
-            continue
-
-        for _, song in recommendations.iterrows():
-
-            print(
-                f"  {song['title']} - "
-                f"{song['artist']}"
-            )
+    except Exception as e:
+        print(f"Music API error: {e}")
+        return pd.DataFrame()
